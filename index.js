@@ -1,17 +1,10 @@
 import express from "express";
-import {launch} from "puppeteer";
-import { Launcher } from "chrome-launcher";
+import puppeteer from "puppeteer-core"; // Use "puppeteer-core" instead of "puppeteer"
 import { platform as _platform, homedir } from "os";
 import { join } from "path";
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-
-const detectChromePath = () => {
-    const chromePath = Launcher.getFirstInstallation();
-    if (!chromePath) throw new Error("Chrome not found! Install Chrome and try again.");
-    return chromePath;
-};
+const PORT = process.env.PORT || 5000;
 
 const detectUserDataDir = () => {
     const platform = _platform();
@@ -27,11 +20,16 @@ const detectUserDataDir = () => {
 
 const extractCookies = async (url) => {
     try {
-        const browser = await launch({
-            headless: true, // Run in headless mode for production
-            executablePath: detectChromePath(),
+        const browser = await puppeteer.launch({
+            headless: "new",
+            executablePath: process.env.CHROME_PATH || "/usr/bin/chromium-browser",
             userDataDir: detectUserDataDir(),
-            args: ["--no-sandbox", "--disable-setuid-sandbox"], // Required for some hosting environments
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
+            ],
         });
 
         const page = await browser.newPage();
